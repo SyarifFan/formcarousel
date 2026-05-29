@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Carousel Builder - Prompt Generator</title>
+    <style>
+        /* Font modern */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+
+        :root {
+            /* Tema Gelap Pekat Sesuai Permintaan */
+            --bg-color: #000000;       /* Hitam Pekat */
+            --surface-color: #0d0d0d;  /* Card color slightly above black */
+            --input-bg: #141414;       /* Latar input form */
+            
+            /* Warna Sesuai Permintaan */
+            --primary: #FF5722;        /* Oren */
+            --secondary-red: #FF0000;  /* Merah */
+            --secondary-blue: #03AED2; /* Biru */
+            --accent-yellow: #FFC81E;  /* Kuning */
+            --accent-green: #48A111;   /* Hijau */
+            --accent-purple: #9C27B0;  /* Ungu untuk seksi tambahan */
+
+            --text-main: #ffffff;
+            --text-muted: #8b92a5;
+            --border-color: rgba(255, 255, 255, 0.08);
+
+            /* Dashboard Style Radius */
+            --radius-card: 28px; 
+            --radius-input: 16px;
+            --radius-btn: 50px; 
+            
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            
+            /* Shadow Halus */
+            --shadow-card: 0 15px 35px rgba(0, 0, 0, 0.8);
+            --shadow-glow: 0 0 15px rgba(3, 174, 210, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', 'Poppins', sans-serif;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--secondary-blue); }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            padding-bottom: 60px;
+        }
+
+        /* Top Navigation */
+        .sticky-ribbon {
+            position: sticky;
+            top: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .ribbon-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .ribbon-title span { color: var(--primary); }
+
+        .output-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: var(--radius-btn);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: #ff6e40; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255, 87, 34, 0.4); }
+        
+        .btn-secondary { background-color: rgba(3, 174, 210, 0.1); color: var(--secondary-blue); border: 1px solid rgba(3, 174, 210, 0.3); }
+        .btn-secondary:hover { background-color: var(--secondary-blue); color: white; box-shadow: 0 6px 20px rgba(3, 174, 210, 0.3); }
+
+        /* Header Area */
+        .header { text-align: center; padding: 50px 20px 40px; }
+        .header h1 { font-family: 'Poppins', sans-serif; font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.5px; }
+        .header h1 span { color: var(--secondary-blue); }
+        .header p { color: var(--text-muted); font-size: 1.05rem; max-width: 650px; margin: 0 auto; }
+
+        /* Main Container */
+        .container { display: flex; flex-direction: column; gap: 35px; max-width: 1100px; margin: 0 auto; padding: 0 20px; width: 100%; }
+
+        /* Cards */
+        .form-section {
+            background: var(--surface-color); padding: 40px; border-radius: var(--radius-card); box-shadow: var(--shadow-card);
+            position: relative; transition: transform 0.3s ease; border: 1px solid var(--border-color);
+        }
+        .form-section:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.15); }
+        .form-section::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+            border-radius: var(--radius-card) var(--radius-card) 0 0; opacity: 0.8;
+        }
+        
+        /* Aksen Warna per Card */
+        .form-section:nth-child(1)::before { background: var(--secondary-blue); }
+        .form-section:nth-child(2)::before { background: var(--primary); }
+        .form-section:nth-child(3)::before { background: var(--accent-yellow); }
+        .form-section:nth-child(4)::before { background: var(--secondary-red); }
+        .form-section:nth-child(5)::before { background: var(--accent-green); }
+
+        .section-title {
+            color: var(--text-main); font-family: 'Poppins', sans-serif; font-size: 1.3rem; font-weight: 700;
+            margin-bottom: 25px; display: flex; align-items: center; gap: 12px;
+        }
+
+        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px 35px; }
+        .full-width { grid-column: 1 / -1; }
+
+        .form-group { display: flex; flex-direction: column; width: 100%; }
+        label { font-weight: 700; color: var(--text-main); font-size: 0.95rem; margin-bottom: 6px; letter-spacing: 0.3px; }
+        .helper-text { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; font-style: italic; }
+
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%; padding: 16px 20px; background-color: var(--input-bg); border: 1px solid var(--border-color);
+            color: var(--text-main); border-radius: var(--radius-input); font-size: 0.95rem; font-weight: 500; transition: var(--transition);
+        }
+        textarea { resize: vertical; min-height: 120px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--secondary-blue); box-shadow: var(--shadow-glow); background-color: #1a1a1a; }
+        
+        select {
+            cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%238b92a5%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 18px center; background-size: 16px; padding-right: 45px;
+        }
+
+        /* SYMMETRICAL COMBO BOX 50:50 */
+        .combo-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        .combo-wrapper select, .combo-wrapper button.input-trigger { height: 56px; margin: 0; width: 100%; }
+
+        .input-trigger {
+            cursor: pointer; text-align: center; color: var(--secondary-blue); border: 1px dashed rgba(3, 174, 210, 0.4);
+            background-color: rgba(3, 174, 210, 0.05); border-radius: var(--radius-input); font-size: 0.95rem; font-weight: 600;
+            transition: var(--transition); display: flex; align-items: center; justify-content: center;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 15px;
+        }
+        .input-trigger:hover { background-color: rgba(3, 174, 210, 0.1); border-color: var(--secondary-blue); }
+        .input-trigger.has-value { color: var(--text-main); border: 1px solid var(--primary); background-color: rgba(255, 87, 34, 0.1); box-shadow: 0 0 10px rgba(255, 87, 34, 0.15); }
+
+        /* CHECKBOX GRID (Untuk Multiple Choice Q10) */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 5px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--input-bg);
+            padding: 14px 18px;
+            border-radius: var(--radius-input);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-bottom: 0;
+            color: var(--text-muted);
+        }
+        .checkbox-label:hover {
+            border-color: var(--secondary-red);
+            background-color: rgba(255, 0, 0, 0.05);
+            color: var(--text-main);
+        }
+        .checkbox-label input[type="checkbox"] {
+            accent-color: var(--secondary-red);
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .checkbox-label:has(input:checked) {
+            border-color: var(--secondary-red);
+            background-color: rgba(255, 0, 0, 0.1);
+            color: var(--text-main);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.1);
+        }
+
+        /* COLLAPSIBLE OUTPUT PANEL */
+        .output-panel { background: var(--surface-color); border-radius: var(--radius-card); border: 1px solid var(--accent-green); overflow: hidden; margin-top: 10px; transition: var(--transition); }
+        .output-header { padding: 25px 35px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(72, 161, 17, 0.08); transition: background 0.3s; }
+        .output-header:hover { background: rgba(72, 161, 17, 0.15); }
+        .output-header h2 { color: var(--accent-green); font-size: 1.2rem; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 12px; margin: 0; }
+        
+        .toggle-icon { transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); color: var(--accent-green); }
+        .output-panel:not(.closed) .toggle-icon { transform: rotate(180deg); }
+        
+        .output-body { max-height: 2500px; transition: max-height 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); overflow: hidden; }
+        .output-panel.closed .output-body { max-height: 0; }
+        .output-content { padding: 0 35px 35px 35px; }
+        
+        .code-box { background: var(--input-bg); padding: 30px; border-radius: var(--radius-input); border: 1px solid var(--border-color); font-family: 'Courier New', Courier, monospace; font-size: 0.95rem; color: #d1d5db; white-space: pre-wrap; line-height: 1.8; }
+
+        /* MODAL */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-card { background: #111111; width: 90%; max-width: 800px; border-radius: var(--radius-card); padding: 40px; box-shadow: 0 30px 80px rgba(0,0,0,0.9); transform: translateY(30px) scale(0.95); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); border: 1px solid var(--border-color); }
+        .modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .modal-header h3 { font-family: 'Poppins', sans-serif; color: var(--text-main); font-size: 1.5rem; font-weight: 700; }
+        .modal-close { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; transition: var(--transition); }
+        .modal-close:hover { background: var(--secondary-red); border-color: var(--secondary-red); color: white; transform: rotate(90deg); }
+        
+        .modal-card textarea { min-height: 220px; margin-bottom: 30px; font-size: 1.05rem; border-color: rgba(255,255,255,0.15); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 15px; }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--accent-green); color: white; padding: 16px 32px; border-radius: var(--radius-btn); font-weight: 700; box-shadow: 0 10px 30px rgba(72, 161, 17, 0.2); opacity: 0; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 3000; display: flex; align-items: center; gap: 12px; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-grid, .combo-wrapper { grid-template-columns: 1fr; }
+            .sticky-ribbon { padding: 15px 20px; flex-direction: column; gap: 15px; text-align: center; }
+            .output-actions { width: 100%; justify-content: center; }
+            .form-section { padding: 30px 20px; border-radius: 20px; }
+            .modal-card { padding: 30px 20px; border-radius: 20px; }
+            .combo-wrapper select, .combo-wrapper button.input-trigger { height: 50px; }
+            .checkbox-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigasi Atas -->
+    <div class="sticky-ribbon">
+        <div class="ribbon-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+            Prompt<span>Carousel</span>
+        </div>
+        <div class="output-actions">
+            <button class="btn btn-secondary" onclick="copyToClipboard()">Copy Text</button>
+            <button class="btn btn-primary" onclick="downloadTxt()">Export .txt</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>Builder <span>Carousel</span></h1>
+        <p>Lengkapi 23 parameter desain carousel. Output akan terstruktur otomatis di panel bawah.</p>
+    </div>
+
+    <div class="container">
+        <!-- FORM PANEL -->
+        <div id="mainForm" style="display:flex; flex-direction: column; gap: 35px;">
+            
+            <!-- SECTION 1: STRATEGI & TARGET UTAMA -->
+            <div class="form-section">
+                <h3 class="section-title">🎯 Seksi 1: Strategi & Target Utama</h3>
+                <div class="form-grid">
+                    
+                    <div class="form-group">
+                        <label>1. Topik utama</label>
+                        <div class="helper-text">Fondasi utama isi carousel.</div>
+                        <div class="combo-wrapper">
+                            <select id="q1" onchange="clearComboInput('q1')">
+                                <option value="">-- Pilih Topik --</option>
+                                <option value="Bisnis UMKM">Bisnis UMKM</option>
+                                <option value="Edukasi atau pembelajaran">Edukasi atau pembelajaran</option>
+                                <option value="Kesehatan dan kebugaran">Kesehatan dan kebugaran</option>
+                                <option value="Teknologi dan gadget">Teknologi dan gadget</option>
+                                <option value="Dakwah atau motivasi islami">Dakwah atau motivasi islami</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q1" onclick="openModal('q1', 'Topik Utama')">+ Input Manual</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>2. Tujuan carousel</label>
+                        <div class="helper-text">Menentukan arah isi dan gaya penyajian.</div>
+                        <div class="combo-wrapper">
+                            <select id="q2" onchange="clearComboInput('q2')">
+                                <option value="">-- Pilih Tujuan --</option>
+                                <option value="Edukasi">Edukasi</option>
+                                <option value="Promosi">Promosi</option>
+                                <option value="Inspirasi">Inspirasi</option>
+                                <option value="Hiburan">Hiburan</option>
+                                <option value="Awareness atau kesadaran">Awareness atau kesadaran</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q2" onclick="openModal('q2', 'Tujuan Carousel')">+ Input Manual</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>3. Target audiens</label>
+                        <div class="helper-text">Membantu AI menyesuaikan bahasa dan gaya.</div>
+                        <div class="combo-wrapper">
+                            <select id="q3" onchange="clearComboInput('q3')">
+                                <option value="">-- Pilih Audiens --</option>
+                                <option value="Mahasiswa atau pelajar">Mahasiswa atau pelajar</option>
+                                <option value="UMKM atau pengusaha kecil">UMKM atau pengusaha kecil</option>
+                                <option value="Ibu rumah tangga">Ibu rumah tangga</option>
+                                <option value="Profesional atau karyawan">Profesional atau karyawan</option>
+                                <option value="Anak muda umum">Anak muda umum</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q3" onclick="openModal('q3', 'Target Audiens')">+ Input Manual</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>4. Bahasa carousel</label>
+                        <div class="helper-text">Pilih bahasa yang cocok dengan audiens.</div>
+                        <div class="combo-wrapper">
+                            <select id="q4" onchange="clearComboInput('q4')">
+                                <option value="">-- Pilih Bahasa --</option>
+                                <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                                <option value="Bahasa Inggris">Bahasa Inggris</option>
+                                <option value="Campuran Indonesia-Inggris">Campuran Indonesia-Inggris</option>
+                                <option value="Bahasa Arab">Bahasa Arab</option>
+                                <option value="Bahasa daerah">Bahasa daerah</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q4" onclick="openModal('q4', 'Bahasa Carousel')">+ Input Manual</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>5. Platform target</label>
+                        <div class="helper-text">Memengaruhi rasio, gaya visual, dan panjang isi.</div>
+                        <div class="combo-wrapper">
+                            <select id="q5" onchange="clearComboInput('q5')">
+                                <option value="">-- Pilih Platform --</option>
+                                <option value="Instagram Feed">Instagram Feed</option>
+                                <option value="Instagram Story">Instagram Story</option>
+                                <option value="LinkedIn">LinkedIn</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="TikTok">TikTok</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q5" onclick="openModal('q5', 'Platform Target')">+ Input Manual</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>6. Ide konten singkat</label>
+                        <div class="helper-text">Kalau ide masih kasar, AI akan mengembangkannya.</div>
+                        <div class="combo-wrapper" style="margin-bottom: 15px;">
+                            <select id="q6" onchange="clearComboInput('q6')">
+                                <option value="">-- Status Ide --</option>
+                                <option value="Ya, saya punya ide">Ya, saya punya ide</option>
+                                <option value="Tidak, bantu dari nol">Tidak, bantu dari nol</option>
+                                <option value="Hanya potongan ide">Hanya potongan ide</option>
+                                <option value="Ada referensi visual">Ada referensi visual</option>
+                                <option value="Saya butuh inspirasi">Saya butuh inspirasi</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q6" onclick="openModal('q6', 'Status Ide Tambahan')">+ Input Status Manual</button>
+                        </div>
+                        <textarea id="q6_text" placeholder="Jabarkan ide konten Anda di sini secara detail..."></textarea>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECTION 2: FORMAT & TATA LETAK -->
+            <div class="form-section">
+                <h3 class="section-title">📐 Seksi 2: Format & Tata Letak</h3>
+                <div class="form-grid">
+                    
+                    <div class="form-group">
+                        <label>7. Jumlah slide</label>
+                        <div class="helper-text">Menentukan panjang dan kedalaman isi.</div>
+                        <div class="combo-wrapper">
+                            <select id="q7" onchange="clearComboInput('q7')">
+                                <option value="">-- Pilih Jumlah --</option>
+                                <option value="3 slide">3 slide</option>
+                                <option value="5 slide">5 slide</option>
+                                <option value="7 slide">7 slide</option>
+                                <option value="10 slide">10 slide</option>
+                                <option value="15 slide">15 slide</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q7" onclick="openModal('q7', 'Jumlah Slide')">+ Custom</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>8. Rasio gambar</label>
+                        <div class="helper-text">Menentukan bentuk visual carousel.</div>
+                        <div class="combo-wrapper">
+                            <select id="q8" onchange="clearComboInput('q8')">
+                                <option value="">-- Pilih Rasio --</option>
+                                <option value="1:1">1:1 (Square)</option>
+                                <option value="4:5">4:5 (Portrait)</option>
+                                <option value="16:9">16:9 (Landscape)</option>
+                                <option value="9:16">9:16 (Story/Reels)</option>
+                                <option value="3:4">3:4 (Standard Foto)</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q8" onclick="openModal('q8', 'Rasio Gambar')">+ Custom</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>9. Bentuk body text</label>
+                        <div class="helper-text">Bentuk isi utama per slide (paragraf/poin).</div>
+                        <div class="combo-wrapper">
+                            <select id="q9" onchange="clearComboInput('q9')">
+                                <option value="">-- Pilih Bentuk Teks --</option>
+                                <option value="Paragraf">Paragraf</option>
+                                <option value="Poin-poin">Poin-poin</option>
+                                <option value="Bagan alur">Bagan alur</option>
+                                <option value="Hierarchy">Hierarchy</option>
+                                <option value="Peta konsep">Peta konsep</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q9" onclick="openModal('q9', 'Bentuk Body Text')">+ Kombinasi</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>10. Gaya penyajian konten</label>
+                        <div class="helper-text">Bagaimana isi disampaikan ke audiens.</div>
+                        <div class="combo-wrapper">
+                            <select id="q10" onchange="clearComboInput('q10')">
+                                <option value="">-- Pilih Gaya Penyajian --</option>
+                                <option value="Informasional">Informasional</option>
+                                <option value="Storytelling">Storytelling</option>
+                                <option value="Step-by-step">Step-by-step</option>
+                                <option value="Perbandingan">Perbandingan</option>
+                                <option value="Kumulatif">Kumulatif</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q10" onclick="openModal('q10', 'Gaya Penyajian')">+ Campuran</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECTION 3: ARAHAN VISUAL -->
+            <div class="form-section">
+                <h3 class="section-title">🎨 Seksi 3: Arahan Visual (Art Direction)</h3>
+                <div class="form-grid">
+                    
+                    <div class="form-group">
+                        <label>11. Visual style</label>
+                        <div class="helper-text">Kunci utama desain carousel.</div>
+                        <div class="combo-wrapper">
+                            <select id="q11" onchange="clearComboInput('q11')">
+                                <option value="">-- Pilih Style --</option>
+                                <option value="Flat design">Flat design</option>
+                                <option value="Minimalis">Minimalis</option>
+                                <option value="Kartun 2D">Kartun 2D</option>
+                                <option value="Clay motion">Clay motion</option>
+                                <option value="Realistis">Realistis</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q11" onclick="openModal('q11', 'Visual Style')">+ Custom Style</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>12. Tone warna</label>
+                        <div class="helper-text">Menentukan suasana carousel.</div>
+                        <div class="combo-wrapper">
+                            <select id="q12" onchange="clearComboInput('q12')">
+                                <option value="">-- Pilih Tone --</option>
+                                <option value="Warm">Warm</option>
+                                <option value="Cool">Cool</option>
+                                <option value="Netral">Netral</option>
+                                <option value="Vibrant">Vibrant</option>
+                                <option value="Mono">Mono</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q12" onclick="openModal('q12', 'Tone Warna')">+ Custom Hex</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>13. Warna custom</label>
+                        <div class="helper-text">Jika butuh spesifikasi palet warna khusus.</div>
+                        <div class="combo-wrapper">
+                            <select id="q13" onchange="clearComboInput('q13')">
+                                <option value="">-- Penggunaan Hex --</option>
+                                <option value="Tidak, pakai warna default">Tidak, pakai warna default</option>
+                                <option value="Ya, warna utama saja">Ya, warna utama saja</option>
+                                <option value="Ya, warna utama dan sekunder">Ya, warna utama dan sekunder</option>
+                                <option value="Ya, warna utama, sekunder, dan aksen">Ya, warna utama, sekunder, aksen</option>
+                                <option value="Ya, palet lengkap">Ya, palet lengkap</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q13" onclick="openModal('q13', 'Warna Custom Detail')">+ Input Hex Code</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>14. Elemen visual pendukung</label>
+                        <div class="helper-text">Membuat carousel lebih hidup.</div>
+                        <div class="combo-wrapper">
+                            <select id="q14" onchange="clearComboInput('q14')">
+                                <option value="">-- Pilih Elemen --</option>
+                                <option value="Ikon">Ikon</option>
+                                <option value="Shape">Shape</option>
+                                <option value="Garis">Garis</option>
+                                <option value="Background pola">Background pola</option>
+                                <option value="Tanpa elemen tambahan">Tanpa elemen tambahan</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q14" onclick="openModal('q14', 'Elemen Visual')">+ Custom Elemen</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>15. Perubahan style antar slide</label>
+                        <div class="helper-text">Apakah semua konsisten atau ada transisi gaya?</div>
+                        <div class="combo-wrapper" style="grid-template-columns: 1fr;">
+                            <div style="display:flex; gap:15px">
+                                <select id="q15" onchange="clearComboInput('q15')" style="flex:1;">
+                                    <option value="">-- Pilih Aturan Style Slide --</option>
+                                    <option value="Tidak, semua slide konsisten">Tidak, semua slide konsisten</option>
+                                    <option value="Ya, slide 1 berbeda">Ya, slide 1 berbeda</option>
+                                    <option value="Ya, beberapa slide berbeda">Ya, beberapa slide berbeda</option>
+                                    <option value="Ya, setiap slide beda style">Ya, setiap slide beda style</option>
+                                    <option value="Ya, hanya slide akhir berbeda">Ya, hanya slide akhir berbeda</option>
+                                </select>
+                                <button class="input-trigger" id="btn_q15" onclick="openModal('q15', 'Perubahan Style Antar Slide')" style="width:200px;">+ Custom Perubahan</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECTION 4: ATURAN KARAKTER & TIPOGRAFI -->
+            <div class="form-section">
+                <h3 class="section-title">👤 Seksi 4: Aturan Karakter & Tipografi</h3>
+                <div class="form-grid">
+                    
+                    <div class="form-group full-width">
+                        <label>16. Tipe karakter (Boleh pilih lebih dari satu)</label>
+                        <div class="helper-text">Menentukan bentuk makhluk hidup atau objek visual.</div>
+                        <div class="checkbox-grid" id="q16">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="karakter" value="Manusia faceless" onchange="generateOutput()"> Manusia faceless
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="karakter" value="Manusia neckless faceless" onchange="generateOutput()"> Manusia neckless faceless
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="karakter" value="Manusia neckless non-faceless" onchange="generateOutput()"> Manusia neckless non-faceless
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="karakter" value="Manusia headless" onchange="generateOutput()"> Manusia headless
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="karakter" value="Hewan faceless" onchange="generateOutput()"> Hewan faceless
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="karakter" value="Benda universe" onchange="generateOutput()"> Benda universe
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>17. Jenis heading</label>
+                        <div class="helper-text">Judul utama yang paling menonjol.</div>
+                        <div class="combo-wrapper">
+                            <select id="q17" onchange="clearComboInput('q17')">
+                                <option value="">-- Pilih Heading --</option>
+                                <option value="Bold besar">Bold besar</option>
+                                <option value="Tipis elegan">Tipis elegan</option>
+                                <option value="Tulisan tangan">Tulisan tangan</option>
+                                <option value="3D tebal">3D tebal</option>
+                                <option value="Sans serif clean">Sans serif clean</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q17" onclick="openModal('q17', 'Jenis Heading')">+ Custom Style</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>18. Jenis subheading</label>
+                        <div class="helper-text">Penjelasan tambahan di bawah judul.</div>
+                        <div class="combo-wrapper">
+                            <select id="q18" onchange="clearComboInput('q18')">
+                                <option value="">-- Pilih Subheading --</option>
+                                <option value="Regular">Regular</option>
+                                <option value="Italic">Italic</option>
+                                <option value="CAPS LOCK">CAPS LOCK</option>
+                                <option value="Outline">Outline</option>
+                                <option value="Sans serif tipis">Sans serif tipis</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q18" onclick="openModal('q18', 'Jenis Subheading')">+ Custom Style</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECTION 5: ELEMEN UI & BRANDING -->
+            <div class="form-section">
+                <h3 class="section-title">📱 Seksi 5: Elemen UI & Branding</h3>
+                <div class="form-grid">
+                    
+                    <div class="form-group">
+                        <label>19. Icon swipe</label>
+                        <div class="helper-text">Petunjuk untuk slide berikutnya.</div>
+                        <div class="combo-wrapper">
+                            <select id="q19" onchange="clearComboInput('q19')">
+                                <option value="">-- Pilih Icon Swipe --</option>
+                                <option value="ON, panah kanan">ON, panah kanan</option>
+                                <option value="ON, panah kiri">ON, panah kiri</option>
+                                <option value="ON, titik-titik">ON, titik-titik</option>
+                                <option value="ON, teks swipe">ON, teks swipe</option>
+                                <option value="OFF">OFF (Tidak ada)</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q19" onclick="openModal('q19', 'Icon Swipe')">+ Custom</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>20. Page number</label>
+                        <div class="helper-text">Menandakan urutan slide user.</div>
+                        <div class="combo-wrapper">
+                            <select id="q20" onchange="clearComboInput('q20')">
+                                <option value="">-- Pilih Page Number --</option>
+                                <option value="ON, angka biasa">ON, angka biasa</option>
+                                <option value="ON, format 2/5">ON, format 2/5</option>
+                                <option value="ON, format 2 of 5">ON, format 2 of 5</option>
+                                <option value="ON, angka sampai END di slide terakhir">ON, angka sampai END (akhir)</option>
+                                <option value="OFF">OFF (Tidak ada)</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q20" onclick="openModal('q20', 'Page Number')">+ Custom Format</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>21. Watermark lengkap</label>
+                        <div class="helper-text">Nama akun dan icon media sosial.</div>
+                        <div class="combo-wrapper">
+                            <select id="q21" onchange="checkWatermark(); clearComboInput('q21')">
+                                <option value="">-- Pilih Watermark --</option>
+                                <option value="ON, nama akun + IG + FB + TikTok">ON, nama akun + IG + FB + TikTok</option>
+                                <option value="ON, nama akun + IG saja">ON, nama akun + IG saja</option>
+                                <option value="ON, nama akun + IG + TikTok">ON, nama akun + IG + TikTok</option>
+                                <option value="ON, nama akun + IG + FB">ON, nama akun + IG + FB</option>
+                                <option value="OFF">OFF (Tidak ada)</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q21" onclick="openModal('q21', 'Watermark Lengkap')">+ Custom Watermark</button>
+                        </div>
+                        <!-- Kolom Input Nama Akun (Tersembunyi secara default) -->
+                        <input type="text" id="q21_akun" placeholder="Masukkan nama akun (misal: @nama.akun)..." style="display: none; margin-top: 15px;" oninput="generateOutput()">
+                    </div>
+
+                    <div class="form-group">
+                        <label>22. Logo brand</label>
+                        <div class="helper-text">Penempatan identitas brand.</div>
+                        <div class="combo-wrapper">
+                            <select id="q22" onchange="clearComboInput('q22')">
+                                <option value="">-- Pilih Posisi Logo --</option>
+                                <option value="Tidak ada logo">Tidak ada logo</option>
+                                <option value="Slide 1 saja">Slide 1 saja</option>
+                                <option value="Slide 1 dan slide akhir">Slide 1 dan slide akhir</option>
+                                <option value="Semua slide">Semua slide</option>
+                                <option value="Slide 2 sampai akhir">Slide 2 sampai akhir</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q22" onclick="openModal('q22', 'Posisi Logo')">+ Custom Placement</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>23. CTA slide akhir</label>
+                        <div class="helper-text">Ajakan tindakan di bagian penutup.</div>
+                        <div class="combo-wrapper">
+                            <select id="q23" onchange="clearComboInput('q23')">
+                                <option value="">-- Pilih Call To Action --</option>
+                                <option value="Follow akun ini">Follow akun ini</option>
+                                <option value="Simpan postingan ini">Simpan postingan ini</option>
+                                <option value="Bagikan ke teman">Bagikan ke teman</option>
+                                <option value="Klik link di bio">Klik link di bio</option>
+                                <option value="Baca slide sebelumnya lagi">Baca slide sebelumnya lagi</option>
+                            </select>
+                            <button class="input-trigger" id="btn_q23" onclick="openModal('q23', 'CTA Slide Akhir')">+ Custom CTA</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLLAPSIBLE OUTPUT PANEL -->
+        <div class="output-panel closed" id="outputSection">
+            <div class="output-header" onclick="toggleOutput()">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    Lihat Hasil Prompt
+                </h2>
+                <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            
+            <div class="output-body">
+                <div class="output-content">
+                    <div class="code-box" id="outputResult">Mulai mengisi form di atas untuk melihat racikan prompt Carousel Anda...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DIALOG INPUT KUSTOM -->
+    <div class="modal-overlay" id="customInputModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalTitle">Input Kustom</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <textarea id="modalTextarea" placeholder="Ketikkan spesifikasi kustom secara detail..."></textarea>
+            
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+                <button class="btn btn-primary" onclick="saveModal()">Simpan Pilihan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toastMsg">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        Teks berhasil disalin!
+    </div>
+
+    <script>
+        // Penyimpanan sementara untuk Custom Input Button
+        let customInputsData = {};
+        let activeInputKey = null;
+
+        // FUNGSI MODAL
+        function openModal(key, title) {
+            activeInputKey = key;
+            const modal = document.getElementById('customInputModal');
+            const textarea = document.getElementById('modalTextarea');
+            
+            document.getElementById('modalTitle').innerText = "Input Manual: " + title;
+            textarea.value = customInputsData[key] || '';
+            
+            modal.classList.add('active');
+            setTimeout(() => textarea.focus(), 200); 
+        }
+
+        function closeModal() {
+            document.getElementById('customInputModal').classList.remove('active');
+            activeInputKey = null;
+        }
+
+        function saveModal() {
+            if (!activeInputKey) return;
+            
+            const textarea = document.getElementById('modalTextarea');
+            const btn = document.getElementById('btn_' + activeInputKey);
+            const selectDropdown = document.getElementById(activeInputKey);
+            
+            const val = textarea.value.trim();
+            
+            if (val) {
+                customInputsData[activeInputKey] = val;
+                btn.classList.add('has-value');
+                btn.innerText = "✓ Custom Tersimpan";
+                if(selectDropdown) selectDropdown.value = '';
+            } else {
+                delete customInputsData[activeInputKey];
+                btn.classList.remove('has-value');
+                btn.innerText = "+ Input Manual";
+            }
+            
+            generateOutput();
+            closeModal();
+        }
+
+        // Membersihkan custom input jika user memilih opsi default di Dropdown
+        function clearComboInput(key) {
+            const btn = document.getElementById('btn_' + key);
+            if (btn) {
+                delete customInputsData[key];
+                btn.classList.remove('has-value');
+                btn.innerText = btn.innerText.replace('✓ Custom Tersimpan', '+ Input Manual');
+                if(!btn.innerText.includes('+')) btn.innerText = "+ Input Manual"; 
+            }
+            generateOutput();
+        }
+
+        function toggleOutput() {
+            const panel = document.getElementById('outputSection');
+            panel.classList.toggle('closed');
+        }
+
+        // FUNGSI MUNCULKAN INPUT NAMA AKUN JIKA WATERMARK ON
+        function checkWatermark() {
+            const q21Value = document.getElementById('q21').value;
+            const akunInput = document.getElementById('q21_akun');
+            if (q21Value.startsWith('ON')) {
+                akunInput.style.display = 'block';
+            } else {
+                akunInput.style.display = 'none';
+                akunInput.value = ''; // Reset nilai jika disembunyikan
+            }
+        }
+
+        // Helper membaca Checkbox
+        function getCheckboxValues(name) {
+            const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
+            let values = [];
+            checkboxes.forEach((cb) => { values.push(cb.value); });
+            return values.length > 0 ? values.join(', ') : '(kosong)';
+        }
+
+        // Helper membaca Nilai Element (Combo / Text)
+        function getElementValue(id) {
+            if (customInputsData[id]) return customInputsData[id];
+            const el = document.getElementById(id);
+            if (!el) return '(kosong)';
+            let val = el.value.trim();
+            return val !== '' ? val : '(kosong)';
+        }
+
+        // FUNGSI GENERATE OUTPUT
+        function generateOutput() {
+            let hasInput = false;
+
+            // Cek apakah minimal ada 1 input yang terisi (untuk trigger teks default)
+            const allSelectsAndInputs = document.querySelectorAll('select, textarea');
+            allSelectsAndInputs.forEach(el => {
+                if(el.id !== 'modalTextarea' && el.value.trim() !== '') hasInput = true;
+            });
+            if(document.querySelectorAll('input[type="checkbox"]:checked').length > 0) hasInput = true;
+            if(Object.keys(customInputsData).length > 0) hasInput = true;
+
+            if (!hasInput) {
+                document.getElementById('outputResult').textContent = "Mulai mengisi form di atas untuk melihat racikan prompt Carousel Anda...";
+                return;
+            }
+
+            // Meracik Teks Output Sesuai Seksi
+            let out = '🎨 Spesifikasi Prompt Carousel AI\n';
+            out += '=========================================\n\n';
+
+            // SEKSI 1
+            out += '[1] STRATEGI & TARGET UTAMA\n';
+            out += '-----------------------------------------\n';
+            out += `- 1. Topik Utama        : ${getElementValue('q1')}\n`;
+            out += `- 2. Tujuan Carousel    : ${getElementValue('q2')}\n`;
+            out += `- 3. Target Audiens     : ${getElementValue('q3')}\n`;
+            out += `- 4. Bahasa Carousel    : ${getElementValue('q4')}\n`;
+            out += `- 5. Platform Target    : ${getElementValue('q5')}\n`;
+            out += `- 6. Ide Konten         : ${getElementValue('q6')}\n`;
+            
+            const ideaDetail = document.getElementById('q6_text').value.trim();
+            if(ideaDetail) out += `      Detail Ide        : ${ideaDetail.replace(/\n/g, '\n                          ')}\n`;
+            out += '\n';
+
+            // SEKSI 2
+            out += '[2] FORMAT & TATA LETAK\n';
+            out += '-----------------------------------------\n';
+            out += `- 7. Jumlah Slide       : ${getElementValue('q7')}\n`;
+            out += `- 8. Rasio Gambar       : ${getElementValue('q8')}\n`;
+            out += `- 9. Bentuk Body Text   : ${getElementValue('q9')}\n`;
+            out += `- 10. Gaya Penyajian    : ${getElementValue('q10')}\n`;
+            out += '\n';
+
+            // SEKSI 3
+            out += '[3] ARAHAN VISUAL (ART DIRECTION)\n';
+            out += '-----------------------------------------\n';
+            out += `- 11. Visual Style      : ${getElementValue('q11')}\n`;
+            out += `- 12. Tone Warna        : ${getElementValue('q12')}\n`;
+            out += `- 13. Warna Custom      : ${getElementValue('q13')}\n`;
+            out += `- 14. Elemen Visual     : ${getElementValue('q14')}\n`;
+            out += `- 15. Transisi Style    : ${getElementValue('q15')}\n`;
+            out += '\n';
+
+            // SEKSI 4
+            out += '[4] ATURAN KARAKTER & TIPOGRAFI\n';
+            out += '-----------------------------------------\n';
+            out += `- 16. Tipe Karakter     : ${getCheckboxValues('karakter')}\n`;
+            out += `- 17. Jenis Heading     : ${getElementValue('q17')}\n`;
+            out += `- 18. Jenis Subheading  : ${getElementValue('q18')}\n`;
+            out += '\n';
+
+            // SEKSI 5
+            out += '[5] ELEMEN UI & BRANDING\n';
+            out += '-----------------------------------------\n';
+            out += `- 19. Icon Swipe        : ${getElementValue('q19')}\n`;
+            out += `- 20. Page Number       : ${getElementValue('q20')}\n`;
+            
+            // Format Watermark dengan Nama Akun jika ada
+            let watermarkVal = getElementValue('q21');
+            const akunInput = document.getElementById('q21_akun');
+            if (akunInput && akunInput.style.display !== 'none' && akunInput.value.trim() !== '') {
+                watermarkVal += ` (Nama Akun: ${akunInput.value.trim()})`;
+            }
+            
+            out += `- 21. Watermark Lengkap : ${watermarkVal}\n`;
+            out += `- 22. Penempatan Logo   : ${getElementValue('q22')}\n`;
+            out += `- 23. CTA Slide Akhir   : ${getElementValue('q23')}\n`;
+            out += '=========================================';
+
+            document.getElementById('outputResult').textContent = out;
+        }
+
+        // Listeners Auto-Generate
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('select, textarea:not(#modalTextarea)');
+            inputs.forEach(input => {
+                input.addEventListener('input', generateOutput);
+                input.addEventListener('change', generateOutput);
+            });
+            generateOutput();
+        });
+
+        // COPY & DOWNLOAD FUNGSI
+        function copyToClipboard() {
+            const textToCopy = document.getElementById('outputResult').innerText;
+            if(textToCopy.includes("Mulai mengisi form")) return;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = textToCopy;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast();
+            } catch (err) {
+                console.error('Gagal menyalin', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toastMsg');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function downloadTxt() {
+            const textToDownload = document.getElementById('outputResult').innerText;
+            if(textToDownload.includes("Mulai mengisi form")) {
+                alert("Isi form terlebih dahulu!");
+                return;
+            }
+
+            const blob = new Blob([textToDownload], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            a.href = url;
+            a.download = 'Prompt-Carousel-AI.txt';
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 0);
+        }
+    </script>
+</body>
+</html>
